@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USDC Treasury Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080b0f;
+      --surface:  #0d1117;
+      --border:   #1c2a1e;
+      --amber:    #f5a623;
+      --amber-dim:#7a5110;
+      --green:    #3dffa0;
+      --red:      #ff4d6d;
+      --muted:    #3d5142;
+      --text:     #c8d8cb;
+      --mono:     'Share Tech Mono', monospace;
+      --sans:     'Barlow', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,.08) 2px,
+        rgba(0,0,0,.08) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Layout ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.4rem 2.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+    }
+
+    .logo-mark {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--amber);
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      font-family: var(--mono);
+      color: var(--amber);
+      font-size: .85rem;
+      font-weight: bold;
+      box-shadow: 0 0 12px rgba(245,166,35,.25);
+    }
+
+    .logo-text {
+      font-family: var(--mono);
+      font-size: 1rem;
+      letter-spacing: .12em;
+      color: var(--amber);
+      text-transform: uppercase;
+    }
+
+    .header-meta {
+      font-family: var(--mono);
+      font-size: .72rem;
+      color: var(--muted);
+      text-align: right;
+      line-height: 1.8;
+    }
+
+    .header-meta span {
+      color: var(--green);
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    /* ── Section titles ── */
+    .section-title {
+      font-family: var(--mono);
+      font-size: .68rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--amber-dim);
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Wallet cards ── */
+    .wallet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+
+    .wallet-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem 1.75rem;
+      position: relative;
+      overflow: hidden;
+      animation: fadeSlide .4s ease both;
+      transition: border-color .2s;
+    }
+
+    .wallet-card:hover {
+      border-color: var(--amber-dim);
+    }
+
+    /* Glow strip on left edge */
+    .wallet-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--amber);
+      box-shadow: 0 0 14px var(--amber);
+    }
+
+    .wallet-label {
+      font-family: var(--mono);
+      font-size: .7rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: .5rem;
+    }
+
+    .wallet-address {
+      font-family: var(--mono);
+      font-size: .7rem;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+      word-break: break-all;
+    }
+
+    .wallet-balance {
+      font-family: var(--mono);
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #fff;
+      letter-spacing: -.02em;
+      margin-bottom: .15rem;
+    }
+
+    .wallet-balance .unit {
+      font-size: 1rem;
+      color: var(--amber);
+      margin-left: .3rem;
+    }
+
+    .wallet-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1.1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-item {
+      flex: 1;
+    }
+
+    .meta-label {
+      font-family: var(--mono);
+      font-size: .6rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .25rem;
+    }
+
+    .meta-value {
+      font-family: var(--mono);
+      font-size: .8rem;
+      color: var(--text);
+    }
+
+    .change-positive { color: var(--green); }
+    .change-negative { color: var(--red); }
+    .change-none     { color: var(--muted); }
+
+    /* ── History table ── */
+    .history-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: .75rem;
+    }
+
+    thead {
+      background: #0a1010;
+    }
+
+    thead th {
+      padding: .75rem 1.25rem;
+      text-align: left;
+      font-weight: normal;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--amber-dim);
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(245,166,35,.03); }
+
+    tbody td {
+      padding: .7rem 1.25rem;
+      color: var(--text);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: .15rem .5rem;
+      border-radius: 3px;
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .tag-received { background: rgba(61,255,160,.1); color: var(--green); }
+    .tag-sent     { background: rgba(255,77,109,.1);  color: var(--red);   }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .8rem;
+      letter-spacing: .1em;
+    }
+
+    /* ── Pulse dot ── */
+    .pulse-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s infinite;
+      margin-right: .4rem;
+      vertical-align: middle;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .3; }
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Stagger wallet cards */
+    .wallet-card:nth-child(1) { animation-delay: .05s; }
+    .wallet-card:nth-child(2) { animation-delay: .12s; }
+    .wallet-card:nth-child(3) { animation-delay: .19s; }
+    .wallet-card:nth-child(4) { animation-delay: .26s; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-mark">$U</div>
+      <span class="logo-text">Treasury Monitor</span>
+    </div>
+    <div class="header-meta">
+      <span class="pulse-dot"></span> LIVE — Solana Mainnet<br>
+      Auto-refresh every <span>60s</span> &nbsp;|&nbsp; USDC balances
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Wallet Cards -->
+    <div class="section-title">Monitored Wallets</div>
+
+    <div class="wallet-grid" id="wallet-grid">
+      {% if wallets %}
+        {% for w in wallets %}
+        <div class="wallet-card">
+          <div class="wallet-label">{{ w.label }}</div>
+          <div class="wallet-address">{{ w.address }}</div>
+          <div class="wallet-balance">
+            {{ "%.2f"|format(w.balance) }}<span class="unit">USDC</span>
+          </div>
+          <div class="wallet-meta">
+            <div class="meta-item">
+              <div class="meta-label">Last Change</div>
+              <div class="meta-value
+                {% if w.last_change and w.last_change > 0 %}change-positive
+                {% elif w.last_change and w.last_change < 0 %}change-negative
+                {% else %}change-none{% endif %}">
+                {% if w.last_change %}
+                  {{ "+" if w.last_change > 0 else "" }}{{ "%.2f"|format(w.last_change) }} USDC
+                {% else %}
+                  No changes yet
+                {% endif %}
+              </div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Last Checked</div>
+              <div class="meta-value">
+                {{ w.last_checked[:16].replace("T", " ") + " UTC" if w.last_checked else "—" }}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">No wallets found. Add wallet addresses to config.py and restart.</div>
+      {% endif %}
+    </div>
+
+    <!-- History Table -->
+    <div class="section-title">Balance Change History</div>
+
+    <div class="history-table-wrap">
+      {% if history %}
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp (UTC)</th>
+            <th>Wallet</th>
+            <th>Type</th>
+            <th>Change</th>
+            <th>New Balance</th>
+            <th>Previous Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in history %}
+          <tr>
+            <td>{{ event.timestamp[:16].replace("T", " ") }}</td>
+            <td>{{ event.label }}</td>
+            <td>
+              {% if event.change_amount > 0 %}
+                <span class="tag tag-received">Received</span>
+              {% else %}
+                <span class="tag tag-sent">Sent</span>
+              {% endif %}
+            </td>
+            <td class="{{ 'change-positive' if event.change_amount > 0 else 'change-negative' }}">
+              {{ "+" if event.change_amount > 0 else "" }}{{ "%.6f"|format(event.change_amount) }}
+            </td>
+            <td>{{ "%.6f"|format(event.new_balance) }}</td>
+            <td style="color:var(--muted)">{{ "%.6f"|format(event.old_balance) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <div class="empty-state">No balance changes recorded yet. The monitor will log events here as they occur.</div>
+      {% endif %}
+    </div>
+
+  </main>
+
+  <script>
+    // Auto-refresh wallet balances every 60 seconds without a full page reload
+    async function refreshWallets() {
+      try {
+        const res = await fetch("/api/wallets");
+        if (!res.ok) return;
+        // Full reload keeps the Jinja template rendering simple for a prototype
+        // For production, you'd patch the DOM here instead
+        window.location.reload();
+      } catch (_) { /* silent fail — monitor keeps running */ }
+    }
+
+    setInterval(refreshWallets, 60_000);
+  </script>
+
+</body>
+</html>
