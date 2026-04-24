@@ -1,0 +1,41 @@
+# macOS
+.DS_Store
+
+# Environment / secrets — NEVER commit these
+.env
+.env.*
+!.env.example
+
+# Node / build artifacts
+node_modules/
+dist/
+build/
+coverage/
+.next/
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+
+# Vercel
+.vercel
+
+# Keys and certs
+*.pem
+*.key
